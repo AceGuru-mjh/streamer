@@ -29,6 +29,36 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    // 签名配置：优先读取 CI/本地注入的环境变量；缺省时回退到占位值。
+    // 本地可用 `gradlew :app:assembleRelease` 前先 export 这些变量（见 README）。
+    val keystoreFile = System.getenv("KEYSTORE_FILE")?.takeIf { it.isNotEmpty() }
+    val keystorePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+    val keyAlias = System.getenv("KEY_ALIAS") ?: "xiahong"
+    val keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+
+    signingConfigs {
+        create("release") {
+            // 若未提供 keystore 文件，则跳过签名（例如纯本地调试构建）
+            if (keystoreFile != null) {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                keyPassword = keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = if (keystoreFile != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
+    }
 }
 
 dependencies {

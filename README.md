@@ -37,21 +37,42 @@ streamer/
 
 ## 构建说明（库本身）
 
-本仓库不含 Gradle Wrapper 的 `gradle-wrapper.jar`（体积大且需联网下载）。本地构建前：
+本仓库**已包含 Gradle Wrapper**（`gradlew` / `gradlew.bat` / `gradle-wrapper.jar`，Gradle 8.2），无需本地预装 Gradle。
 
-1. 安装 Gradle 8.2+ 或 Android Studio（自带 Gradle）。
-2. 在项目根目录生成 wrapper（如本地已装 Gradle）：
-   ```bash
-   gradle wrapper --gradle-version 8.2
-   ```
-3. 构建库 AAR：
-   ```bash
-   ./gradlew :core:ui-xiahong:assembleRelease
-   ```
-   或发布到本地 maven：
-   ```bash
-   ./gradlew :core:ui-xiahong:publishToMavenLocal
-   ```
+构建库 AAR：
+```bash
+./gradlew :core:ui-xiahong:assembleRelease
+```
+或发布到本地 maven：
+```bash
+./gradlew :core:ui-xiahong:publishToMavenLocal
+```
+
+本地构建演示 APK（不签名会回退到 debug 签名）：
+```bash
+./gradlew :app:assembleRelease
+```
+
+## 自动构建与发布 APK（GitHub Actions）
+
+无需 Android Studio、无需本地环境。仓库已配置 `.github/workflows/build-release.yml`：
+
+- **触发方式**：
+  - 推送一个 `v*` 格式的 tag（如 `v1.0`）→ 自动构建并发布到 GitHub Release；
+  - 或在 GitHub 仓库 **Actions → Build & Release APK → Run workflow** 手动触发。
+- **流程**：setup JDK 17 → 自动用 `keytool` 生成签名 keystore → 构建 `:app` 的 release APK →
+  若是 tag 触发，将 APK 上传到对应 GitHub Release。
+- **产物**：在仓库 **Releases** 页下载 `app-release.apk`。
+
+> 注意：工作流每次用临时 keystore 签名，因此无法在同一设备上「覆盖安装」旧版本（卸载后重装即可）。
+> 若要固定签名以便增量更新，请在仓库 **Settings → Secrets** 中配置 `KEYSTORE_PASSWORD` / `KEY_PASSWORD`
+> （密码可变，alias 固定为 `xiahong`），并把自有 keystore 的 base64 注入 `KEYSTORE_FILE` —— 详见 workflow 注释。
+
+发布示例：
+```bash
+git tag v1.0
+git push origin v1.0
+```
 
 ## 接入外部 App
 
