@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 纯 UI 库，无任何 <application>/<activity> 启动入口 -->
+</manifest>

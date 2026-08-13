@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <!-- 演示用的深暗红背景，衬托霞红流光 -->
+    <color name="xiahong_bg">#1A0A0F</color>
+</resources>

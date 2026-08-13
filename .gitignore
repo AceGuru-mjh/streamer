@@ -1,0 +1,17 @@
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# 本地 Gradle wrapper jar 未纳入（体积大、需联网下载，由本地生成）
+# 注意：gradle/wrapper/gradle-wrapper.properties 可提交，但 .jar 不提交
+gradle/wrapper/gradle-wrapper.jar
+
+# 工具内部数据（非库内容）
+.codebuddy/
