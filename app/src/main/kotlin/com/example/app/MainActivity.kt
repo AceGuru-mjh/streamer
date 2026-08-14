@@ -56,6 +56,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui_xiahong.ElectricSliderStep
+import com.example.ui_xiahong.NeonElectricDiscreteSlider
 import com.example.ui_xiahong.XiaHongConfig
 import com.example.ui_xiahong.XiaHongFlow
 import com.example.ui_xiahong.XiaHongIntensity
@@ -473,7 +475,7 @@ private fun LoopingCircularProgress(
 private fun NeonSliderDemo() {
     GlassCard {
         Column(modifier = Modifier.padding(16.dp, 14.dp)) {
-            var currentStep by remember { mutableStateOf(SliderStep.High) }
+            var currentStep by remember { mutableStateOf(ElectricSliderStep.High) }
             Text(
                 text = "霓虹磁吸滑块 · 电流弧",
                 color = Color.White,
@@ -484,12 +486,12 @@ private fun NeonSliderDemo() {
             Spacer(Modifier.height(6.dp))
             Text(
                 text = "Current: ${currentStep.label}" +
-                    if (currentStep == SliderStep.Max) " · 放电中" else "",
-                color = if (currentStep == SliderStep.Max) Color(0xFFFF2A85) else Color(0xFF00C6FF),
+                    if (currentStep == ElectricSliderStep.Max) " · 放电中" else "",
+                color = if (currentStep == ElectricSliderStep.Max) Color(0xFFFF2A85) else Color(0xFF00C6FF),
                 fontSize = 13.sp
             )
             Spacer(Modifier.height(16.dp))
-            NeonDiscreteSlider(
+            NeonElectricDiscreteSlider(
                 value = currentStep,
                 onValueChange = { currentStep = it }
             )
@@ -498,7 +500,7 @@ private fun NeonSliderDemo() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                SliderStep.entries.forEach { step ->
+                ElectricSliderStep.entries.forEach { step ->
                     Button(
                         onClick = { currentStep = step },
                         colors = ButtonDefaults.buttonColors(
