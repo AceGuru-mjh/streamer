@@ -8,6 +8,8 @@ import android.graphics.PathMeasure
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
