@@ -34,7 +34,7 @@ jobs:
           KEY_PASS: ${{ secrets.KEY_PASSWORD || 'android' }}
         run: |
           keytool -genkeypair -v \
-            -keystore keystore.jks \
+            -keystore "${{ github.workspace }}/keystore.jks" \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -alias xiahong \
             -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
@@ -42,7 +42,7 @@ jobs:
 
       - name: Build Release APK
         env:
-          KEYSTORE_FILE: keystore.jks
+          KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'android' }}
           KEY_ALIAS: xiahong
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
