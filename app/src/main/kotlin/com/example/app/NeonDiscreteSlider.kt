@@ -1,5 +1,7 @@
 package com.example.app
 
+import android.graphics.BlurMaskFilter
+import android.graphics.Paint
 import android.os.Build
 import androidx.annotation.FloatRange
 import androidx.compose.animation.core.Animatable
@@ -34,8 +36,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,7 +69,7 @@ enum class SliderStep(val stepValue: Float, val label: String) {
 }
 
 /**
- * 粒子内部数据结构
+ * 粒子内部数据结构（矩阵方块）
  */
 private class SquareParticle(
     var normalizedX: Float, // 0.0 ~ 1.0 相对轨道位置
@@ -77,11 +81,25 @@ private class SquareParticle(
     val pulseFrequency: Float // 律动频率
 )
 
+private val NeonMatrixColors = listOf(
+    Color(0xCC00F2FE), // 半透明青色
+    Color(0xCC9B51E0), // 半透明紫罗兰
+    Color(0xCCFF2A85)  // 半透明淡洋红
+)
+
+private val TrackDark = Color(0xFF12131C)
+private val FillCyan = listOf(Color(0xFF00C6FF), Color(0xFF0072FF))
+private val FillMax = listOf(Color(0xFF00F2FE), Color(0xFF9B51E0), Color(0xFFFF2A85))
+
 /**
- * 高性能霓虹磁吸吸附滑块 (Neon Discrete Magnetic Slider)
+ * 高性能霓虹磁吸吸附滑块 (Neon Discrete Magnetic Slider + Ultracode 电流弧)
+ *
+ * - 保留「律动小方块」粒子与「离散磁吸物理引擎」。
+ * - 新增刻度 notch ticks、双环 Thumb。
+ * - 切换到 Max 档位时，叠加原生 Procedural 电流/闪电弧特效（矩阵方块 + 电弧 + Thumb 火花）。
  *
  * @param value 当前选中的档位
- * @param onValueChange 档位变化回调（在磁吸吸附后或手动切换时触发）
+ * @param onValueChange 档位变化回调
  * @param modifier 外部样式修饰符
  * @param reduceMotion 是否启用减弱动画 (从系统设置获取)
  */
@@ -117,7 +135,7 @@ fun NeonDiscreteSlider(
         }
     }
 
-    // 档位判定：是否触发了 Max 档位特效
+    // 档位判定：是否触发了 Max 档位电流特效
     val isMaxStep = SliderStep.fromValue(animatedValue.value) == SliderStep.Max
 
     Box(
@@ -126,7 +144,7 @@ fun NeonDiscreteSlider(
             .height(thumbSize),
         contentAlignment = Alignment.CenterStart
     ) {
-        // 1. 底层滑块轨道与霓虹粒子特效 Canvas
+        // 1. 底层滑块轨道 + 刻度 notch + 霓虹粒子 + 电流弧 Canvas
         val isAndroid12OrAbove = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         val blurRadius = if (isAndroid12OrAbove && isMaxStep) 2.dp else 0.dp
 
@@ -144,7 +162,7 @@ fun NeonDiscreteSlider(
 
             // 绘制深色底轨
             drawRoundRect(
-                color = Color(0xFF12131C),
+                color = TrackDark,
                 size = size,
                 cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx)
             )
@@ -152,14 +170,7 @@ fun NeonDiscreteSlider(
             // 绘制当前激活部分的渐变填充
             if (fillWidthPx > 0f) {
                 val activeGradient = Brush.horizontalGradient(
-                    colors = if (isMaxStep) listOf(
-                        Color(0xFF00F2FE),
-                        Color(0xFF9B51E0),
-                        Color(0xFFFF2A85)
-                    ) else listOf(
-                        Color(0xFF00C6FF),
-                        Color(0xFF0072FF)
-                    ),
+                    colors = if (isMaxStep) FillMax else FillCyan,
                     endX = fillWidthPx
                 )
 
@@ -180,11 +191,28 @@ fun NeonDiscreteSlider(
                     )
                 }
             }
+
+            // 刻度 notch ticks：5 个固定档位刻度
+            val tickCount = SliderStep.entries.size
+            val tickColor = Color.White.copy(alpha = 0.25f)
+            val tickActiveColor = Color.White.copy(alpha = 0.7f)
+            val tickH = size.height * 0.34f
+            for (i in 0 until tickCount) {
+                val x = (i.toFloat() / (tickCount - 1)) * size.width
+                val active = (currentProgress * (tickCount - 1)) >= i - 0.001f
+                drawLine(
+                    color = if (active) tickActiveColor else tickColor,
+                    start = Offset(x, (size.height - tickH) / 2f),
+                    end = Offset(x, (size.height + tickH) / 2f),
+                    strokeWidth = 2.dp.toPx(),
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+            }
         }
 
-        // 2. 粒子的渲染层 (仅当 isMaxStep = true 时激活，非 Max 状态销毁不占资源)
+        // 2. 矩阵粒子 + 程序化电流弧 叠加层 (仅当 isMaxStep = true 时激活，非 Max 完全不绘制)
         if (isMaxStep) {
-            NeonParticleOverlay(
+            NeonMaxOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(trackHeight)
@@ -194,10 +222,13 @@ fun NeonDiscreteSlider(
             )
         }
 
-        // 3. 拖拽滑块 Thumb 与手势处理
+        // 3. 双环 Thumb 与手势处理
         val thumbPx = with(density) { thumbSize.toPx() }
         val availableWidth = (trackWidthPx - thumbPx).coerceAtLeast(1f)
         val thumbOffset = (animatedValue.value / 4f) * availableWidth
+
+        val ringColor = if (isMaxStep) Color(0xFFFF2A85) else Color(0xFF00C6FF)
+        val ringColor2 = if (isMaxStep) Color(0xFF9B51E0) else Color(0xFF00F2FE)
 
         Canvas(
             modifier = Modifier
@@ -236,54 +267,62 @@ fun NeonDiscreteSlider(
                     )
                 }
         ) {
-            // Thumb 外发光底色
+            val r = size.minDimension / 2f
+            // 外发光底色
             drawCircle(
-                color = if (isMaxStep) Color(0xFFFF2A85).copy(alpha = 0.4f) else Color(0xFF0072FF).copy(alpha = 0.3f),
-                radius = size.minDimension / 2f
+                color = ringColor.copy(alpha = 0.35f),
+                radius = r
             )
-            // Thumb 核心白色滑块
+            // 外环
+            drawCircle(
+                color = ringColor,
+                radius = r - 1.dp.toPx(),
+                style = Stroke(width = 2.dp.toPx())
+            )
+            // 白色核心
             drawCircle(
                 color = Color.White,
-                radius = (size.minDimension / 2f) - 4.dp.toPx()
+                radius = (r - 4.dp.toPx())
+            )
+            // 内环
+            drawCircle(
+                color = ringColor2,
+                radius = (r - 9.dp.toPx()).coerceAtLeast(2.dp.toPx()),
+                style = Stroke(width = 1.5.dp.toPx())
             )
         }
     }
 }
 
 /**
- * 粒子特效叠加层：负责 35-45 个超迷你正方形粒子的横向漂移与 Alpha/Scale 律动
+ * Max 档位特效叠加层：矩阵方块粒子 + 程序化电流/闪电弧 + Thumb 火花。
+ * 仅在 isMaxStep 时挂载；withFrameNanos 帧循环只在 Max 时运行，非 Max 零开销。
  */
 @Composable
-private fun NeonParticleOverlay(
+private fun NeonMaxOverlay(
     fillProgress: Float,
     reduceMotion: Boolean,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
 
-    // 固定 40 个粒子 (符合 35-45 性能要求)
-    val particleCount = 40
+    val particleCount = 45
     val particles = remember {
-        val neonColors = listOf(
-            Color(0xCC00F2FE), // 半透明青色
-            Color(0xCC9B51E0), // 半透明紫罗兰
-            Color(0xCCFF2A85)  // 半透明淡洋红
-        )
         List(particleCount) {
             val sizeDp = Random.nextFloat() * 2f + 2f // 2dp - 4dp
             SquareParticle(
                 normalizedX = Random.nextFloat(),
                 normalizedY = Random.nextFloat(),
                 sizePx = with(density) { sizeDp.dp.toPx() },
-                color = neonColors[Random.nextInt(neonColors.size)],
-                speed = Random.nextFloat() * 0.15f + 0.05f, // 飘移速度
+                color = NeonMatrixColors[Random.nextInt(NeonMatrixColors.size)],
+                speed = Random.nextFloat() * 0.15f + 0.05f,
                 phase = Random.nextFloat() * 2f * Math.PI.toFloat(),
                 pulseFrequency = Random.nextFloat() * 2f + 1f
             )
         }
     }
 
-    // Nanos 帧脉冲，驱使粒子循环运动
+    // Nanos 帧脉冲，驱使粒子与电流弧循环运动
     var frameTimeNanos by remember { mutableLongStateOf(0L) }
     LaunchedEffect(reduceMotion) {
         if (!reduceMotion) {
@@ -303,7 +342,10 @@ private fun NeonParticleOverlay(
 
         if (activeWidth <= 0f) return@Canvas
 
-        // 裁剪路径：确保粒子严格被限制在圆角轨道填充区内
+        val seconds = frameTimeNanos / 1_000_000_000f
+        val flicker = if (reduceMotion) 1f else (0.6f + 0.4f * sin(seconds * 22f))
+
+        // 裁剪路径：粒子与电弧严格限制在圆角轨道填充区内
         val clipPath = Path().apply {
             addRoundRect(
                 RoundRect(
@@ -313,37 +355,145 @@ private fun NeonParticleOverlay(
             )
         }
 
-        val seconds = frameTimeNanos / 1_000_000_000f
-
         clipPath(clipPath) {
+            // (a) 矩阵方块粒子：从左向右漂移 + 周期律动
             particles.forEach { p ->
-                // 1. 横向位置更新 (从左到右漂移)
                 if (!reduceMotion && frameTimeNanos > 0L) {
-                    p.normalizedX += p.speed * 0.016f // 简易 delta 步进
-                    if (p.normalizedX > 1.0f) {
-                        p.normalizedX = 0.0f // 循环回归左边
-                    }
+                    p.normalizedX += p.speed * 0.016f
+                    if (p.normalizedX > 1.0f) p.normalizedX = 0.0f
                 }
-
-                // 计算粒子实际坐标 (横向基于 activeWidth 缩放)
                 val realX = p.normalizedX * activeWidth
                 val realY = p.normalizedY * trackHeight
-
-                // 2. 周期律动 (0.4~1.0 缩放, 0.2~0.7 淡入淡出)
                 val pulse = sin(seconds * p.pulseFrequency + p.phase)
-                val scale = 0.7f + 0.3f * pulse        // 0.4 ~ 1.0
-                val alpha = (0.45f + 0.25f * pulse).coerceIn(0.2f, 0.7f) // 0.2 ~ 0.7
-
+                val scale = 0.7f + 0.3f * pulse
+                val alpha = (0.45f + 0.25f * pulse).coerceIn(0.2f, 0.7f)
                 val currentSize = p.sizePx * scale
-
-                // 3. 绘制超迷你**正方形**粒子
                 drawRect(
                     color = p.color.copy(alpha = alpha),
                     topLeft = Offset(realX - currentSize / 2f, realY - currentSize / 2f),
                     size = Size(currentSize, currentSize)
                 )
             }
+
+            // (b) 程序化电流/闪电弧：每帧用新种子生成抖动裂纹
+            val seed = if (reduceMotion) 1337L else (frameTimeNanos / 16_000_000L)
+            drawElectricArcs(activeWidth, trackHeight, seconds, flicker, seed)
+
+            // (c) Thumb 火花：在拇指当前位置放射状电弧火花
+            val thumbPx = 36.dp.toPx()
+            val availableWidth = (trackWidth - thumbPx).coerceAtLeast(1f)
+            val thumbOffsetX = fillProgress * availableWidth + thumbPx / 2f
+            drawThumbElectricSparks(thumbOffsetX, trackHeight / 2f, seconds, flicker, seed)
         }
+    }
+}
+
+/**
+ * 程序化电流/闪电弧：在激活填充区生成一条带垂直抖动的主电弧 + 若干分叉放电枝。
+ * 每帧使用不同 seed 重生成，形成持续闪烁、跳变的电流观感（原生 Canvas 绘制，零重组）。
+ */
+private fun DrawScope.drawElectricArcs(
+    activeWidth: Float,
+    trackHeight: Float,
+    seconds: Float,
+    flicker: Float,
+    seed: Long
+) {
+    val rnd = Random(seed)
+    val baseY = trackHeight / 2f
+
+    fun buildJagged(startX: Float, endX: Float, amp: Float, steps: Int): android.graphics.Path {
+        val path = android.graphics.Path()
+        path.moveTo(startX, baseY)
+        for (i in 1..steps) {
+            val x = startX + (endX - startX) * i / steps
+            val y = baseY + (rnd.nextFloat() - 0.5f) * amp
+            path.lineTo(x, y)
+        }
+        return path
+    }
+
+    // 主电弧
+    val mainPath = buildJagged(0f, activeWidth, trackHeight * 0.6f, 16)
+
+    // 分叉放电枝
+    val branchPaths = List(3) {
+        val bx0 = activeWidth * rnd.nextFloat()
+        val bx1 = bx0 + (rnd.nextFloat() - 0.5f) * activeWidth * 0.5f
+        buildJagged(bx0, bx1.coerceIn(0f, activeWidth), trackHeight * 0.9f, 6)
+    }
+
+    val canvas = drawContext.canvas.nativeCanvas
+
+    val glowPaint = Paint().apply {
+        color = Color(0xFFFF2A85).toArgb()
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+        isAntiAlias = true
+        maskFilter = BlurMaskFilter(7f, BlurMaskFilter.Blur.NORMAL)
+        alpha = (200 * flicker).toInt().coerceIn(80, 255)
+    }
+    val corePaint = Paint().apply {
+        color = Color.White.toArgb()
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f
+        isAntiAlias = true
+        alpha = (230 * flicker).toInt().coerceIn(100, 255)
+    }
+
+    canvas.drawPath(mainPath, glowPaint)
+    canvas.drawPath(mainPath, corePaint)
+    branchPaths.forEach {
+        canvas.drawPath(it, glowPaint)
+        canvas.drawPath(it, corePaint)
+    }
+}
+
+/**
+ * Thumb 火花：从拇指位置向四周放射 4~6 条短促抖动电流火花，带闪烁。
+ */
+private fun DrawScope.drawThumbElectricSparks(
+    centerX: Float,
+    centerY: Float,
+    seconds: Float,
+    flicker: Float,
+    seed: Long
+) {
+    val rnd = Random(seed xor 0x9E3779B9L)
+    val canvas = drawContext.canvas.nativeCanvas
+    val sparkCount = 5
+    val maxLen = 26f
+
+    val glowPaint = Paint().apply {
+        color = Color(0xFF00F2FE).toArgb()
+        style = Paint.Style.STROKE
+        strokeWidth = 2.5f
+        isAntiAlias = true
+        maskFilter = BlurMaskFilter(5f, BlurMaskFilter.Blur.NORMAL)
+        alpha = (220 * flicker).toInt().coerceIn(90, 255)
+    }
+    val corePaint = Paint().apply {
+        color = Color.White.toArgb()
+        style = Paint.Style.STROKE
+        strokeWidth = 1.2f
+        isAntiAlias = true
+        alpha = (240 * flicker).toInt().coerceIn(110, 255)
+    }
+
+    for (i in 0 until sparkCount) {
+        val angle = (i.toFloat() / sparkCount) * 2f * Math.PI.toFloat() + rnd.nextFloat() * 0.4f
+        val len = maxLen * (0.6f + 0.4f * rnd.nextFloat())
+        val midX = centerX + kotlin.math.cos(angle) * len * 0.5f + (rnd.nextFloat() - 0.5f) * 6f
+        val midY = centerY + kotlin.math.sin(angle) * len * 0.5f + (rnd.nextFloat() - 0.5f) * 6f
+        val endX = centerX + kotlin.math.cos(angle) * len
+        val endY = centerY + kotlin.math.sin(angle) * len
+        val spark = android.graphics.Path().apply {
+            moveTo(centerX, centerY)
+            lineTo(midX, midY)
+            lineTo(endX, endY)
+        }
+        canvas.drawPath(spark, glowPaint)
+        canvas.drawPath(spark, corePaint)
     }
 }
 

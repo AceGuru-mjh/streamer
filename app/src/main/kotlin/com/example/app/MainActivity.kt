@@ -475,7 +475,7 @@ private fun NeonSliderDemo() {
         Column(modifier = Modifier.padding(16.dp, 14.dp)) {
             var currentStep by remember { mutableStateOf(SliderStep.High) }
             Text(
-                text = "霓虹磁吸滑块",
+                text = "霓虹磁吸滑块 · 电流弧",
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp,
@@ -483,7 +483,8 @@ private fun NeonSliderDemo() {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "Current: ${currentStep.label}",
+                text = "Current: ${currentStep.label}" +
+                    if (currentStep == SliderStep.Max) " · 放电中" else "",
                 color = if (currentStep == SliderStep.Max) Color(0xFFFF2A85) else Color(0xFF00C6FF),
                 fontSize = 13.sp
             )
