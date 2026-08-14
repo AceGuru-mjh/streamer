@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import kotlin.math.cos
 import kotlin.math.sin
 
 /**
@@ -20,17 +19,19 @@ import kotlin.math.sin
  * - 流光扫光 Sweep：一道斜向高光带横向扫过，呼应「流光」主题；
  * - 霓虹边框 Border：发光圆角描边 + 中心向四周的暗角晕影。
  * 全部由 time/phase 驱动，在 Canvas 绘制回调中读取，不触发 Composable 重组。
+ *
+ * 注意：参数命名为 tint，避免与 android.graphics.Paint.color 属性产生命名歧义。
  */
 
 // 景深光斑：若干柔光圆斑缓慢横向漂移 + 轻微纵向呼吸
-internal fun DrawScope.drawBokeh(color: Color, phase: Float, intensity: Float) {
+internal fun DrawScope.drawBokeh(tint: Color, phase: Float, intensity: Float) {
     val w = size.width
     val h = size.height
     val minSide = minOf(w, h)
     val native = drawContext.canvas.nativeCanvas
 
     val glow = Paint().apply {
-        color = color.toArgb()
+        color = tint.toArgb()
         isAntiAlias = true
         alpha = (120 * intensity.coerceIn(0f, 1.5f)).toInt().coerceIn(0, 255)
         maskFilter = BlurMaskFilter(minSide * 0.05f, BlurMaskFilter.Blur.NORMAL)
@@ -49,7 +50,7 @@ internal fun DrawScope.drawBokeh(color: Color, phase: Float, intensity: Float) {
 }
 
 // 流光扫光：斜向高光带横向扫过（phase ∈ [0,1) 循环）
-internal fun DrawScope.drawSweep(color: Color, phase: Float, intensity: Float) {
+internal fun DrawScope.drawSweep(tint: Color, phase: Float, intensity: Float) {
     val w = size.width
     val h = size.height
     val band = w * 0.16f
@@ -60,7 +61,7 @@ internal fun DrawScope.drawSweep(color: Color, phase: Float, intensity: Float) {
     rotate(18f, pivot = center) {
         drawRect(
             brush = Brush.horizontalGradient(
-                colors = listOf(Color.Transparent, color.copy(alpha = peak), Color.Transparent),
+                colors = listOf(Color.Transparent, tint.copy(alpha = peak), Color.Transparent),
                 startX = 0f,
                 endX = band
             ),
@@ -71,7 +72,7 @@ internal fun DrawScope.drawSweep(color: Color, phase: Float, intensity: Float) {
 }
 
 // 霓虹边框 + 暗角晕影（pulse ∈ [0,1] 控制呼吸辉光强度）
-internal fun DrawScope.drawBorder(color: Color, pulse: Float, intensity: Float) {
+internal fun DrawScope.drawBorder(tint: Color, pulse: Float, intensity: Float) {
     val w = size.width
     val h = size.height
     val pad = 6.dp.toPx()
@@ -84,20 +85,20 @@ internal fun DrawScope.drawBorder(color: Color, pulse: Float, intensity: Float) 
 
     // 外层发光描边
     val glow = Paint().apply {
-        color = color.toArgb()
+        color = tint.toArgb()
         style = Paint.Style.STROKE
         isAntiAlias = true
-        this.strokeWidth = strokeW
+        strokeWidth = strokeW
         maskFilter = BlurMaskFilter(strokeW * 2.2f * glowScale, BlurMaskFilter.Blur.NORMAL)
     }
     native.drawRoundRect(pad, pad, w - pad, h - pad, r, r, glow)
 
     // 内层清晰描边
     val crisp = Paint().apply {
-        color = color.copy(alpha = 0.85f).toArgb()
+        color = tint.copy(alpha = 0.85f).toArgb()
         style = Paint.Style.STROKE
         isAntiAlias = true
-        this.strokeWidth = strokeW * 0.6f
+        strokeWidth = strokeW * 0.6f
     }
     native.drawRoundRect(pad, pad, w - pad, h - pad, r, r, crisp)
 
