@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -127,7 +129,7 @@ private fun DemoContent() {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "XiaHong Flow · 进度演示",
+                        text = "XiaHong Flow · 特效演示",
                         fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.65f),
                         letterSpacing = 2.sp
@@ -135,7 +137,12 @@ private fun DemoContent() {
                 }
             }
 
-            EnterReveal(delayMs = 90) {
+            // 霓虹离散磁吸滑块：证明流光特效可叠加在「可交互自定义控件」之上，而非仅包裹静态进度条
+            EnterReveal(delayMs = 80) {
+                NeonSliderDemo()
+            }
+
+            EnterReveal(delayMs = 170) {
                 ProgressCard(title = "下载中", gradient = RoseGlow) {
                     LoopingLinearProgress(gradient = RoseGlow, durationMillis = 1500)
                 }
@@ -455,6 +462,54 @@ private fun LoopingCircularProgress(
         label = "cpv"
     )
     GlowCircularProgress(progress = value, gradient = gradient, sizeDp = sizeDp)
+}
+
+/**
+ * 霓虹离散磁吸滑块演示：直接在 XiaHongFlow 内容层内使用 NeonDiscreteSlider，
+ * 配合档位按钮与响应式标签，证明流光特效可叠加在「可交互自定义控件」之上。
+ */
+@Composable
+private fun NeonSliderDemo() {
+    GlassCard {
+        Column(modifier = Modifier.padding(16.dp, 14.dp)) {
+            var currentStep by remember { mutableStateOf(SliderStep.High) }
+            Text(
+                text = "霓虹磁吸滑块",
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                letterSpacing = 1.sp
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Current: ${currentStep.label}",
+                color = if (currentStep == SliderStep.Max) Color(0xFFFF2A85) else Color(0xFF00C6FF),
+                fontSize = 13.sp
+            )
+            Spacer(Modifier.height(16.dp))
+            NeonDiscreteSlider(
+                value = currentStep,
+                onValueChange = { currentStep = it }
+            )
+            Spacer(Modifier.height(14.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                SliderStep.entries.forEach { step ->
+                    Button(
+                        onClick = { currentStep = step },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (currentStep == step) Color(0xFFFF2A85) else Color(0xFF1F222E)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(step.label, fontSize = 10.sp)
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
