@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,11 +28,13 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
@@ -162,8 +165,10 @@ fun NeonDiscreteSlider(
                 // 激活轨道的裁剪路径 (圆角 Pill 形状)
                 val trackPath = Path().apply {
                     addRoundRect(
-                        Rect(0f, 0f, fillWidthPx.coerceAtLeast(cornerRadiusPx * 2), size.height),
-                        CornerRadius(cornerRadiusPx, cornerRadiusPx)
+                        RoundRect(
+                            Rect(0f, 0f, fillWidthPx.coerceAtLeast(cornerRadiusPx * 2), size.height),
+                            CornerRadius(cornerRadiusPx, cornerRadiusPx)
+                        )
                     )
                 }
 
@@ -300,8 +305,10 @@ private fun NeonParticleOverlay(
         // 裁剪路径：确保粒子严格被限制在圆角轨道填充区内
         val clipPath = Path().apply {
             addRoundRect(
-                Rect(0f, 0f, activeWidth, trackHeight),
-                CornerRadius(cornerRadiusPx, cornerRadiusPx)
+                RoundRect(
+                    Rect(0f, 0f, activeWidth, trackHeight),
+                    CornerRadius(cornerRadiusPx, cornerRadiusPx)
+                )
             )
         }
 
