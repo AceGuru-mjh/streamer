@@ -42,11 +42,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.drawscope.Stroke as DrawStroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +58,7 @@ import com.example.ui_xiahong.XiaHongFlow
 import com.example.ui_xiahong.XiaHongIntensity
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -152,10 +156,10 @@ private fun DemoContent() {
                 ) {
                     CircularTile(label = "同步", gradient = MintGlow) {
                         GlowCircularProgress(
-                            progress = { 0f }, // 不确定旋转
-                            indeterminate = true,
+                            progress = 0f,
                             gradient = MintGlow,
-                            sizeDp = 72
+                            sizeDp = 72,
+                            indeterminate = true
                         )
                     }
                     CircularTile(label = "上传", gradient = AmberGlow) {
@@ -177,7 +181,7 @@ private fun DemoContent() {
 @Composable
 private fun EnterReveal(delayMs: Int, content: @Composable () -> Unit) {
     val visible = remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { kotlinx.coroutines.delay(delayMs.toLong()); visible.value = true }
+    LaunchedEffect(Unit) { delay(delayMs.toLong()); visible.value = true }
     val alpha by animateFloatAsState(if (visible.value) 1f else 0f, tween(500))
     val offsetY by animateFloatAsState(if (visible.value) 0f else 18f, tween(500))
     Column(
@@ -208,22 +212,16 @@ private fun ProgressCard(
                     fontSize = 15.sp,
                     letterSpacing = 1.sp
                 )
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .graphicsLayer {
-                            shadowElevation = 6.dp.toPx()
-                            shape = androidx.compose.foundation.shape.CircleShape
-                            clip = false
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(Modifier.size(8.dp)) {
-                        drawCircle(
-                            Brush.radialGradient(gradient),
-                            radius = size.minDimension / 2f
-                        )
+                // 渐变发光指示点
+                Canvas(Modifier.size(10.dp)) {
+                    val glow = Paint().apply {
+                        color = gradient.last().toArgb()
+                        maskFilter = BlurMaskFilter(size.minDimension * 0.6f, BlurMaskFilter.Blur.NORMAL)
                     }
+                    drawContext.canvas.nativeCanvas.drawCircle(
+                        size.width / 2f, size.height / 2f, size.minDimension / 2f, glow
+                    )
+                    drawCircle(Brush.radialGradient(gradient), radius = size.minDimension / 2f)
                 }
             }
             Spacer(Modifier.height(14.dp))
@@ -254,7 +252,7 @@ private fun StaticLinearProgress(
                 )
             }
             Spacer(Modifier.height(14.dp))
-            GlowLinearProgress(progress = { progress }, gradient = gradient)
+            GlowLinearProgress(progress = progress, gradient = gradient)
         }
     }
 }
@@ -284,7 +282,7 @@ private fun GlassCard(content: @Composable () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f)),
         shape = MaterialTheme.shapes.large
     ) {
-        // 上沿高光 + 内容
+        // 顶部高光描边，营造玻璃质感
         Box {
             Canvas(Modifier.matchParentSize()) {
                 drawRoundRect(
@@ -303,7 +301,7 @@ private fun GlassCard(content: @Composable () -> Unit) {
 /** 精致线性进度条：圆角轨道 + 渐变填充 + 发光头部。 */
 @Composable
 private fun GlowLinearProgress(
-    progress: () -> Float,
+    progress: Float,
     gradient: List<Color>,
     modifier: Modifier = Modifier,
     trackAlpha: Float = 0.10f,
@@ -320,7 +318,7 @@ private fun GlowLinearProgress(
             size = size,
             cornerRadius = CornerRadius(r, r)
         )
-        val p = progress().coerceIn(0f, 1f)
+        val p = progress.coerceIn(0f, 1f)
         if (p > 0.001f) {
             val fillW = w * p
             val cr = minOf(r, fillW / 2f)
@@ -356,7 +354,7 @@ private fun LoopingLinearProgress(
         ),
         label = "lpv"
     )
-    GlowLinearProgress(progress = { value }, gradient = gradient)
+    GlowLinearProgress(progress = value, gradient = gradient)
     Spacer(Modifier.height(8.dp))
     Text(
         "${(value * 100).toInt()}%",
@@ -364,26 +362,31 @@ private fun LoopingLinearProgress(
         fontWeight = FontWeight.Bold,
         fontSize = 13.sp,
         modifier = Modifier.fillMaxWidth(),
-        textAlign = androidx.compose.ui.text.style.TextAlign.End
+        textAlign = TextAlign.End
     )
 }
 
 /** 精致圆环进度条：扫描渐变弧 + 发光弧尖 + 中心百分比。 */
 @Composable
 private fun GlowCircularProgress(
-    progress: () -> Float,
+    progress: Float,
     gradient: List<Color>,
     sizeDp: Int,
     indeterminate: Boolean = false,
     strokeDp: Float = 6f
 ) {
     val density = LocalDensity.current
-    val boxPx = with(density) { sizeDp.dp.toPx() }
     val sw = with(density) { strokeDp.dp.toPx() }
-    Box(
-        modifier = Modifier.size(sizeDp.dp),
-        contentAlignment = Alignment.Center
-    ) {
+    val rotation = if (indeterminate) {
+        val t = rememberInfiniteTransition(label = "rot")
+        t.animateFloat(
+            0f, 360f,
+            infiniteRepeatable(tween(1100, easing = LinearEasing), RepeatMode.Restart),
+            "rot"
+        ).value
+    } else 0f
+    val p = progress.coerceIn(0f, 1f)
+    Box(modifier = Modifier.size(sizeDp.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.matchParentSize()) {
             val min = minOf(size.width, size.height)
             val radius = (min - sw) / 2f
@@ -396,17 +399,8 @@ private fun GlowCircularProgress(
                 useCenter = false,
                 topLeft = center - Offset(radius, radius),
                 size = Size(radius * 2f, radius * 2f),
-                style = DrawStroke(width = sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                style = Stroke(width = sw, cap = StrokeCap.Round)
             )
-            val p = progress().coerceIn(0f, 1f)
-            val rotation = if (indeterminate) {
-                val t = rememberInfiniteTransition(label = "rot")
-                t.animateFloat(
-                    0f, 360f,
-                    infiniteRepeatable(tween(1100, LinearEasing), RepeatMode.Restart),
-                    "rot"
-                ).value
-            } else 0f
             val startAngle = 270f + rotation
             val sweep = if (indeterminate) 90f else 360f * p
             if (sweep > 0.5f) {
@@ -417,10 +411,10 @@ private fun GlowCircularProgress(
                     useCenter = false,
                     topLeft = center - Offset(radius, radius),
                     size = Size(radius * 2f, radius * 2f),
-                    style = DrawStroke(width = sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                    style = Stroke(width = sw, cap = StrokeCap.Round)
                 )
                 // 发光弧尖
-                val tipAngle = Math.toRadians((270.0 + sweep).toDouble())
+                val tipAngle = Math.toRadians((startAngle + sweep).toDouble())
                 val tip = Offset(
                     center.x + radius * cos(tipAngle).toFloat(),
                     center.y + radius * sin(tipAngle).toFloat()
@@ -460,7 +454,7 @@ private fun LoopingCircularProgress(
         ),
         label = "cpv"
     )
-    GlowCircularProgress(progress = { value }, gradient = gradient, sizeDp = sizeDp)
+    GlowCircularProgress(progress = value, gradient = gradient, sizeDp = sizeDp)
 }
 
 /**
