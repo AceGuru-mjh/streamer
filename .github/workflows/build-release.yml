@@ -25,27 +25,35 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 自动生成签名 keystore（无需本地准备）。
-      # 如需固定签名以便覆盖安装，可在仓库 Secrets 中设置 KEYSTORE_PASSWORD / KEY_PASSWORD，
-      # 并在此改用固定 keystore（见 README 进阶说明）。
-      - name: Generate signing keystore
+      # 签名：使用固定别名/密码（mengjinghao / meng411722）。
+      # - 若仓库 Secrets 中设置了 KEYSTORE_BASE64（一次生成的固定 keystore 的 base64），
+      #   则解码复用，保证跨版本「覆盖安装」；否则每次临时生成（不可覆盖安装旧版）。
+      # - 生成临时 keystore 时也使用相同的别名与密码，满足指定签名要求。
+      - name: Prepare signing keystore
         env:
-          STORE_PASS: ${{ secrets.KEYSTORE_PASSWORD || 'android' }}
-          KEY_PASS: ${{ secrets.KEY_PASSWORD || 'android' }}
+          STORE_PASS: meng411722
+          KEY_PASS: meng411722
+          ALIAS: mengjinghao
         run: |
-          keytool -genkeypair -v \
-            -keystore "${{ github.workspace }}/keystore.jks" \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -alias xiahong \
-            -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
-            -dname "CN=XiaHong, OU=Dev, O=XiaHong, L=Unknown, ST=Unknown, C=CN"
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/keystore.jks"
+            echo "Reused persisted keystore from KEYSTORE_BASE64 secret."
+          else
+            keytool -genkeypair -v \
+              -keystore "${{ github.workspace }}/keystore.jks" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -alias "$ALIAS" \
+              -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+              -dname "CN=mengjinghao, OU=Dev, O=XiaHong, L=Unknown, ST=Unknown, C=CN"
+            echo "Generated temporary keystore (alias=$ALIAS)."
+          fi
 
       - name: Build Release APK
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'android' }}
-          KEY_ALIAS: xiahong
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
+          KEYSTORE_PASSWORD: meng411722
+          KEY_ALIAS: mengjinghao
+          KEY_PASSWORD: meng411722
         run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK as build artifact

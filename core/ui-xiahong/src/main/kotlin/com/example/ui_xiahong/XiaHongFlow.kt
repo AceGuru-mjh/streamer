@@ -19,6 +19,9 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import com.example.ui_xiahong.internal.ArcRenderer
 import com.example.ui_xiahong.internal.ParticleEngine
+import com.example.ui_xiahong.internal.drawBokeh
+import com.example.ui_xiahong.internal.drawBorder
+import com.example.ui_xiahong.internal.drawSweep
 
 // 只有 API 33+ 支持 AGSL
 private const val SHADER_SRC = """
@@ -59,6 +62,34 @@ fun XiaHongFlow(
         ),
         label = "xiahong-time"
     )
+    // 新阶段特效的相位（独立周期，均由同一 InfiniteTransition 驱动，零重组）
+    val sweepPhase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "xiahong-sweep"
+    )
+    val bokehPhase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 9000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "xiahong-bokeh"
+    )
+    val borderPulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2400, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "xiahong-border"
+    )
 
     // 3. AGSL Shader 处理（API 33+ 可用，否则为 null 自动降级）
     val shader = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -80,7 +111,14 @@ fun XiaHongFlow(
                 }
             }
     ) {
-        // 背景特效层
+        // 背景特效层：景深光斑（最底，营造纵深）
+        if (config.enableBokeh) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawBokeh(config.bokehColor, bokehPhase, intensity.multiplier)
+            }
+        }
+
+        // 中层特效：粒子奔流
         Canvas(modifier = Modifier.matchParentSize()) {
             if (config.enableParticles) {
                 particleEngine.draw(this, config.primaryColor, config.particleSpeed * intensity.multiplier)
@@ -92,5 +130,17 @@ fun XiaHongFlow(
 
         // 用户内容层
         content()
+
+        // 叠加特效层：流光扫光 + 霓虹边框（最上，覆盖在内容之上）
+        if (config.enableSweep) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawSweep(config.sweepColor, sweepPhase, intensity.multiplier)
+            }
+        }
+        if (config.enableBorder) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawBorder(config.borderColor, borderPulse, intensity.multiplier)
+            }
+        }
     }
 }
