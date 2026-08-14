@@ -32,7 +32,7 @@ streamer/
 ## 版本约束
 
 - `minSdk = 33`：AGSL `RuntimeShader` 需 Android 13+（已做 <33 自动降级，仅跳过液态扭曲）。
-- `compileSdk = 34`，Kotlin 1.9.22 匹配 Compose 编译器扩展 1.5.1，Compose BOM 2024.02.00。
+- `compileSdk = 34`，Kotlin 1.9.22 匹配 Compose 编译器扩展 1.5.12，Compose BOM 2024.02.00。
 - 发光效果依赖 `BlurMaskFilter`，需 API 29+ 硬件加速 Canvas —— `minSdk 33` 已满足。
 
 ## 构建说明（库本身）

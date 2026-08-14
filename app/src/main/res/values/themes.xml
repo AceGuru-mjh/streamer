@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 演示主题：继承 Material3 无 ActionBar 主题，设置深色窗口背景 -->
-    <style name="Theme.XiaHongDemo" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- 演示窗口主题：使用框架自带的无 ActionBar 主题（避免依赖 material3 预置主题名），设置深色窗口背景 -->
+    <style name="Theme.XiaHongDemo" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/xiahong_bg</item>
         <item name="android:statusBarColor">@color/black</item>
         <item name="android:navigationBarColor">@color/black</item>
