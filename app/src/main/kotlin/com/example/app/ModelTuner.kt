@@ -48,38 +48,43 @@ private fun stepToConfig(step: ElectricSliderStep): NeonConfig = when (step) {
         enableBokeh = false,
         enableSweep = false,
         enableBorder = true,
+        enableSparks = false,
+        enableMiniBlocks = false,
         borderColor = Color(0xFF2A3550),
         liquidIntensity = 0f,
         particleCount = 0,
         particleSpeed = 0f
     )
-    ElectricSliderStep.Medium -> NeonConfig( // 少量粒子，无电弧
+    ElectricSliderStep.Medium -> NeonConfig( // 少量粒子，无电弧/电花，画面简洁
         enableLiquid = false,
         enableParticles = true,
         enableArc = false,
         enableBokeh = false,
         enableSweep = true,
         enableBorder = true,
-        primaryColor = Color(0xFF4364F7),
-        borderColor = Color(0xFF4364F7),
+        enableSparks = false,
+        enableMiniBlocks = false,
+        primaryColor = Color(0xFF00C6FF),
+        borderColor = Color(0xFF00C6FF),
         particleCount = 120,
         particleSpeed = 0.8f,
         liquidIntensity = 0f
     )
-    ElectricSliderStep.High -> NeonConfig( // 低速粒子，轻度霓虹发光
+    ElectricSliderStep.High -> NeonConfig( // 低速粒子 + 律动方阵 + 白荧光电花，轻度霓虹发光
         enableLiquid = false,
         enableParticles = true,
-        enableArc = false,
+        enableArc = true,
         enableBokeh = false,
         enableSweep = true,
         enableBorder = true,
-        primaryColor = Color(0xFF00C6FF),
-        borderColor = Color(0xFF00C6FF),
+        primaryColor = Color(0xFF00E5FF),
+        arcColor = Color(0xFFFFFFFF),
+        borderColor = Color(0xFF00E5FF),
         particleCount = 220,
         particleSpeed = 1.0f,
-        liquidIntensity = 0.2f
+        liquidIntensity = 0.15f
     )
-    ElectricSliderStep.XHigh -> NeonConfig( // 粒子增多 + 简易电流电弧
+    ElectricSliderStep.XHigh -> NeonConfig( // 粒子增多 + 电流电弧 + 紫青未来感
         enableLiquid = false,
         enableParticles = true,
         enableArc = true,
@@ -93,19 +98,19 @@ private fun stepToConfig(step: ElectricSliderStep): NeonConfig = when (step) {
         particleSpeed = 1.3f,
         liquidIntensity = 0.3f
     )
-    ElectricSliderStep.Max -> NeonConfig( // 全部特效中等强度
+    ElectricSliderStep.Max -> NeonConfig( // 全部特效中等强度，霓虹品红 + 白电花
         enableLiquid = true,
         enableParticles = true,
         enableArc = true,
         enableBokeh = true,
         enableSweep = true,
         enableBorder = true,
-        primaryColor = Color(0xFFFF2D55),
-        arcColor = Color(0xFFFF00FF),
-        borderColor = Color(0xFFFF2D55),
+        primaryColor = Color(0xFFB14BFF),
+        arcColor = Color(0xFFFFFFFF),
+        borderColor = Color(0xFFB14BFF),
         particleCount = 400,
         particleSpeed = 1.5f,
-        liquidIntensity = 0.6f
+        liquidIntensity = 0.4f
     )
     ElectricSliderStep.UltraCode -> NeonConfig( // 专属高能模式：电光青 + 翻倍 + 高强度液态
         enableLiquid = true,
@@ -121,7 +126,7 @@ private fun stepToConfig(step: ElectricSliderStep): NeonConfig = when (step) {
         sweepColor = UltraCyan,
         particleCount = 800, // 粒子数量翻倍
         particleSpeed = 3.0f, // 流动速度翻倍
-        liquidIntensity = 1.2f // 高强度 AGSL 液态扭曲
+        liquidIntensity = 0.7f // 高强度 AGSL 液态扭曲（适度降糊）
     )
 }
 

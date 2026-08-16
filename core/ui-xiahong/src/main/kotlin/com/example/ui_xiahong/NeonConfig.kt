@@ -9,21 +9,24 @@ enum class NeonIntensity(val multiplier: Float) {
 }
 
 data class NeonConfig(
-    val primaryColor: Color = Color(0xFFBC8F8F),   // 霓虹主色
-    val arcColor: Color = Color(0xFFFF00FF),       // 电流/电弧颜色
+    val primaryColor: Color = Color(0xFF00E5FF),   // 霓虹主色（冷霓虹青蓝，未来感）
+    val arcColor: Color = Color(0xFFFFFFFF),       // 电流/电花颜色（霓虹白荧光）
     val particleCount: Int = 400,
     val particleSpeed: Float = 1.5f,
     val enableLiquid: Boolean = true,
     val enableParticles: Boolean = true,
     val enableArc: Boolean = true,
-    val liquidIntensity: Float = 0.6f,
+    val liquidIntensity: Float = 0.35f,            // 适度降糊，保留轻微流动质感
     // ── 新阶段特效开关（纯 Canvas，API<33 也生效）──
     val enableBokeh: Boolean = true,               // 景深光斑
     val enableSweep: Boolean = true,               // 流光扫光
     val enableBorder: Boolean = true,              // 霓虹边框 + 暗角
-    val bokehColor: Color = Color(0xFFFF8FA3),     // 光斑颜色（默认霓虹衍生）
+    val enableSparks: Boolean = true,              // 霓虹白荧光电花（替代背景贯穿电线）
+    val enableMiniBlocks: Boolean = true,          // 背景网格呼吸方阵（律动迷你小方块）
+    val miniBlockColor: Color = Color(0xFF00E5FF), // 小方块颜色（默认主色衍生）
+    val bokehColor: Color = Color(0xFF00B3FF),     // 光斑颜色（冷霓虹衍生）
     val sweepColor: Color = Color.White,           // 扫光颜色
-    val borderColor: Color = Color(0xFFFF2D55)     // 边框颜色（默认霓虹）
+    val borderColor: Color = Color(0xFF00E5FF)     // 边框颜色（冷霓虹）
 ) {
     companion object {
         val Default = NeonConfig()

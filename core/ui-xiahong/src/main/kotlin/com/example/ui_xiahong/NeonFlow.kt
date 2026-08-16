@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import com.example.ui_xiahong.internal.ArcRenderer
+import com.example.ui_xiahong.internal.MiniBlockEngine
 import com.example.ui_xiahong.internal.ParticleEngine
 import com.example.ui_xiahong.internal.drawBokeh
 import com.example.ui_xiahong.internal.drawBorder
@@ -31,8 +32,8 @@ private const val SHADER_SRC = """
     vec4 main(vec2 fragCoord) {
         float speed = time * 1.5;
         vec2 uv = fragCoord;
-        float dispX = sin(uv.y * 0.02 + speed) * 15.0 * intensity;
-        float dispY = cos(uv.x * 0.02 + speed * 0.8) * 10.0 * intensity;
+        float dispX = sin(uv.y * 0.02 + speed) * 6.0 * intensity;
+        float dispY = cos(uv.x * 0.02 + speed * 0.8) * 4.0 * intensity;
         return content.eval(fragCoord + vec2(dispX, dispY));
     }
 """
@@ -49,6 +50,7 @@ fun NeonFlow(
         ParticleEngine(config.particleCount)
     }
     val arcRenderer = remember { ArcRenderer() }
+    val miniBlockEngine = remember { MiniBlockEngine() }
 
     // 2. 动画时间轴：用 InfiniteTransition 在绘制阶段驱动，不触发 Composable 重组
     //    time 仅被 graphicsLayer / Canvas 的绘制回调读取（draw 阶段），消费量不会重组本函数。
@@ -118,13 +120,20 @@ fun NeonFlow(
             }
         }
 
+        // 背景律动方阵：网格呼吸迷你小方块（赛博数据矩阵氛围）
+        if (config.enableMiniBlocks) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                miniBlockEngine.draw(this, config.miniBlockColor, time)
+            }
+        }
+
         // 中层特效：粒子奔流
         Canvas(modifier = Modifier.matchParentSize()) {
             if (config.enableParticles) {
                 particleEngine.draw(this, config.primaryColor, config.particleSpeed * intensity.multiplier)
             }
             if (config.enableArc) {
-                arcRenderer.draw(this, config.arcColor, time)
+                arcRenderer.draw(this, config.arcColor, time, config.enableSparks)
             }
         }
 
