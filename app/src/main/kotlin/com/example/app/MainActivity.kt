@@ -70,8 +70,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                // 演示：档位调谐器 + 流光特效（库组件驱动）
-                ModelIntelligenceEffortTuner()
+                // 演示画廊：10 个利用 ui-xiahong 库模块的演示（清晰、无糊背景）
+                DemoGallery()
             }
         }
     }
