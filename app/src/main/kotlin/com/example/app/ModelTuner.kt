@@ -24,10 +24,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui_xiahong.ElectricSliderStep
+import com.example.ui_xiahong.NeonConfig
 import com.example.ui_xiahong.NeonElectricDiscreteSlider
-import com.example.ui_xiahong.XiaHongConfig
-import com.example.ui_xiahong.XiaHongFlow
-import com.example.ui_xiahong.XiaHongIntensity
+import com.example.ui_xiahong.NeonFlow
+import com.example.ui_xiahong.NeonIntensity
 
 /** 赛博深空背景色。 */
 private val CyberBg = Color(0xFF05060A)
@@ -37,11 +37,11 @@ private val UltraCyan = Color(0xFF00FFFF)
 
 /**
  * 档位 ↔ 全局特效强度映射。
- * 复用库 [XiaHongFlow] 内部既有渲染器（ParticleEngine / ArcRenderer / AGSL 液态），
- * 仅通过 [XiaHongConfig] 开关与数值调节强度，绝不重写特效。
+ * 复用库 [NeonFlow] 内部既有渲染器（ParticleEngine / ArcRenderer / AGSL 液态），
+ * 仅通过 [NeonConfig] 开关与数值调节强度，绝不重写特效。
  */
-private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) {
-    ElectricSliderStep.Low -> XiaHongConfig( // 仅微弱霓虹边框，关闭电弧/粒子/扭曲
+private fun stepToConfig(step: ElectricSliderStep): NeonConfig = when (step) {
+    ElectricSliderStep.Low -> NeonConfig( // 仅微弱霓虹边框，关闭电弧/粒子/扭曲
         enableLiquid = false,
         enableParticles = false,
         enableArc = false,
@@ -53,7 +53,7 @@ private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) 
         particleCount = 0,
         particleSpeed = 0f
     )
-    ElectricSliderStep.Medium -> XiaHongConfig( // 少量粒子，无电弧
+    ElectricSliderStep.Medium -> NeonConfig( // 少量粒子，无电弧
         enableLiquid = false,
         enableParticles = true,
         enableArc = false,
@@ -66,7 +66,7 @@ private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) 
         particleSpeed = 0.8f,
         liquidIntensity = 0f
     )
-    ElectricSliderStep.High -> XiaHongConfig( // 低速粒子，轻度霓虹发光
+    ElectricSliderStep.High -> NeonConfig( // 低速粒子，轻度霓虹发光
         enableLiquid = false,
         enableParticles = true,
         enableArc = false,
@@ -79,7 +79,7 @@ private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) 
         particleSpeed = 1.0f,
         liquidIntensity = 0.2f
     )
-    ElectricSliderStep.XHigh -> XiaHongConfig( // 粒子增多 + 简易电流电弧
+    ElectricSliderStep.XHigh -> NeonConfig( // 粒子增多 + 简易电流电弧
         enableLiquid = false,
         enableParticles = true,
         enableArc = true,
@@ -93,7 +93,7 @@ private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) 
         particleSpeed = 1.3f,
         liquidIntensity = 0.3f
     )
-    ElectricSliderStep.Max -> XiaHongConfig( // 全部特效中等强度
+    ElectricSliderStep.Max -> NeonConfig( // 全部特效中等强度
         enableLiquid = true,
         enableParticles = true,
         enableArc = true,
@@ -107,7 +107,7 @@ private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) 
         particleSpeed = 1.5f,
         liquidIntensity = 0.6f
     )
-    ElectricSliderStep.UltraCode -> XiaHongConfig( // 专属高能模式：电光青 + 翻倍 + 高强度液态
+    ElectricSliderStep.UltraCode -> NeonConfig( // 专属高能模式：电光青 + 翻倍 + 高强度液态
         enableLiquid = true,
         enableParticles = true,
         enableArc = true,
@@ -129,9 +129,9 @@ private fun stepToConfig(step: ElectricSliderStep): XiaHongConfig = when (step) 
  * Model Intelligence Effort Tuner —— 极简赛博朋克档位调谐器。
  *
  * - 深色赛博背景 + 标题「Model Intelligence Effort Tuner」+ 中间离散霓虹滑块 + 下方实时档位名。
- * - 滑块为库组件 [NeonElectricDiscreteSlider]；背景特效为库 [XiaHongFlow]（复用 ParticleEngine/ArcRenderer/液态）。
- * - [NeonElectricDiscreteSlider.onValueChange] 实时把当前档位映射为全局 [XiaHongConfig] 并驱动背景强度。
- * - 标题/档位标签置于 [XiaHongFlow] 前景层，不参与液态扭曲，保持清晰可读。
+ * - 滑块为库组件 [NeonElectricDiscreteSlider]；背景特效为库 [NeonFlow]（复用 ParticleEngine/ArcRenderer/液态）。
+ * - [NeonElectricDiscreteSlider.onValueChange] 实时把当前档位映射为全局 [NeonConfig] 并驱动背景强度。
+ * - 标题/档位标签置于 [NeonFlow] 前景层，不参与液态扭曲，保持清晰可读。
  */
 @Composable
 fun ModelIntelligenceEffortTuner() {
@@ -143,8 +143,8 @@ fun ModelIntelligenceEffortTuner() {
     val accent = if (isUltra) UltraCyan else Color.White
 
     Box(modifier = Modifier.fillMaxSize().background(CyberBg)) {
-        // 背景特效层：复用库 XiaHongFlow（内部即 ParticleEngine + ArcRenderer + AGSL 液态）
-        XiaHongFlow(modifier = Modifier.fillMaxSize(), config = config, intensity = XiaHongIntensity.MEDIUM) {
+        // 背景特效层：复用库 NeonFlow（内部即 ParticleEngine + ArcRenderer + AGSL 液态）
+        NeonFlow(modifier = Modifier.fillMaxSize(), config = config, intensity = NeonIntensity.MEDIUM) {
             // 内容层留空：液态扭曲只作用于背景特效层，前景滑块/文字保持清晰
         }
 

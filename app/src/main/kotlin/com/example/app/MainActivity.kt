@@ -58,9 +58,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui_xiahong.ElectricSliderStep
 import com.example.ui_xiahong.NeonElectricDiscreteSlider
-import com.example.ui_xiahong.XiaHongConfig
-import com.example.ui_xiahong.XiaHongFlow
-import com.example.ui_xiahong.XiaHongIntensity
+import com.example.ui_xiahong.NeonConfig
+import com.example.ui_xiahong.NeonFlow
+import com.example.ui_xiahong.NeonIntensity
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.delay
@@ -78,15 +78,15 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * 演示界面：用 XiaHongFlow 包裹一组精致的进度条 UI，验证三层特效叠加在真实控件上的观感。
+ * 演示界面：用 NeonFlow 包裹一组精致的进度条 UI，验证三层特效叠加在真实控件上的观感。
  * 直接运行此 app 模块即可在设备上看到流动、发光、电弧 + 进度条动画。
  */
 @Composable
-fun XiaHongDemoScreen() {
-    XiaHongFlow(
+fun NeonDemoScreen() {
+    NeonFlow(
         modifier = Modifier.fillMaxSize(),
-        intensity = XiaHongIntensity.ULTRA,
-        config = XiaHongConfig(
+        intensity = NeonIntensity.ULTRA,
+        config = NeonConfig(
             primaryColor = Color(0xFFE91E63),
             particleCount = 600,
             enableLiquid = true
@@ -96,7 +96,7 @@ fun XiaHongDemoScreen() {
     }
 }
 
-// ── 统一配色：霞红流光暗色玻璃主题下的渐变光带 ──────────────────────────
+// ── 统一配色：霓虹流光暗色玻璃主题下的渐变光带 ──────────────────────────
 private val RoseGlow = listOf(Color(0xFFFF8FA3), Color(0xFFFF2D55))
 private val CyanGlow = listOf(Color(0xFF9BE7F0), Color(0xFF00B8D4))
 private val VioletGlow = listOf(Color(0xFFD0B4FF), Color(0xFF7C4DFF))
@@ -121,7 +121,7 @@ private fun DemoContent() {
             EnterReveal(delayMs = 0) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "霞红流光",
+                        text = "霓虹流光",
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -132,7 +132,7 @@ private fun DemoContent() {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "XiaHong Flow · 特效演示",
+                        text = "Neon Flow · 特效演示",
                         fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.65f),
                         letterSpacing = 2.sp
@@ -468,7 +468,7 @@ private fun LoopingCircularProgress(
 }
 
 /**
- * 霓虹离散磁吸滑块演示：直接在 XiaHongFlow 内容层内使用 NeonDiscreteSlider，
+ * 霓虹离散磁吸滑块演示：直接在 NeonFlow 内容层内使用 NeonDiscreteSlider，
  * 配合档位按钮与响应式标签，证明流光特效可叠加在「可交互自定义控件」之上。
  */
 @Composable
@@ -522,8 +522,8 @@ private fun NeonSliderDemo() {
  */
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp,dpi=420")
 @Composable
-private fun XiaHongDemoScreenPreview() {
+private fun NeonDemoScreenPreview() {
     MaterialTheme {
-        XiaHongDemoScreen()
+        NeonDemoScreen()
     }
 }

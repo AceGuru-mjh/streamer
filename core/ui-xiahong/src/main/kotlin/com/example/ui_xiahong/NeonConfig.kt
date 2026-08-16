@@ -2,14 +2,14 @@ package com.example.ui_xiahong
 
 import androidx.compose.ui.graphics.Color
 
-enum class XiaHongIntensity(val multiplier: Float) {
+enum class NeonIntensity(val multiplier: Float) {
     CALM(0.5f),
     MEDIUM(1.0f),
     ULTRA(2.0f)
 }
 
-data class XiaHongConfig(
-    val primaryColor: Color = Color(0xFFBC8F8F),   // 霞红主色
+data class NeonConfig(
+    val primaryColor: Color = Color(0xFFBC8F8F),   // 霓虹主色
     val arcColor: Color = Color(0xFFFF00FF),       // 电流/电弧颜色
     val particleCount: Int = 400,
     val particleSpeed: Float = 1.5f,
@@ -21,11 +21,11 @@ data class XiaHongConfig(
     val enableBokeh: Boolean = true,               // 景深光斑
     val enableSweep: Boolean = true,               // 流光扫光
     val enableBorder: Boolean = true,              // 霓虹边框 + 暗角
-    val bokehColor: Color = Color(0xFFFF8FA3),     // 光斑颜色（默认霞红衍生）
+    val bokehColor: Color = Color(0xFFFF8FA3),     // 光斑颜色（默认霓虹衍生）
     val sweepColor: Color = Color.White,           // 扫光颜色
-    val borderColor: Color = Color(0xFFFF2D55)     // 边框颜色（默认霞红）
+    val borderColor: Color = Color(0xFFFF2D55)     // 边框颜色（默认霓虹）
 ) {
     companion object {
-        val Default = XiaHongConfig()
+        val Default = NeonConfig()
     }
 }

@@ -1,4 +1,4 @@
-// ⚠️ 注意：本 app 模块仅用于本地验证「霞红·流光」库的效果，不参与库发布。
+// ⚠️ 注意：本 app 模块仅用于本地验证「霓虹·流光」库的效果，不参与库发布。
 // 库本身仍是 :core:ui-xiahong（com.android.library）。
 plugins {
     id("com.android.application")
@@ -34,7 +34,7 @@ android {
     // 本地可用 `gradlew :app:assembleRelease` 前先 export 这些变量（见 README）。
     val keystoreFile = System.getenv("KEYSTORE_FILE")?.takeIf { it.isNotEmpty() }
     val keystorePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
-    val keyAlias = System.getenv("KEY_ALIAS") ?: "xiahong"
+    val keyAlias = System.getenv("KEY_ALIAS") ?: "neon"
     val keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
 
     signingConfigs {

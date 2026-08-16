@@ -38,10 +38,10 @@ private const val SHADER_SRC = """
 """
 
 @Composable
-fun XiaHongFlow(
+fun NeonFlow(
     modifier: Modifier = Modifier,
-    config: XiaHongConfig = XiaHongConfig.Default,
-    intensity: XiaHongIntensity = XiaHongIntensity.MEDIUM,
+    config: NeonConfig = NeonConfig.Default,
+    intensity: NeonIntensity = NeonIntensity.MEDIUM,
     content: @Composable () -> Unit
 ) {
     // 1. 初始化引擎（remember 保证状态在重组中保留）
@@ -52,7 +52,7 @@ fun XiaHongFlow(
 
     // 2. 动画时间轴：用 InfiniteTransition 在绘制阶段驱动，不触发 Composable 重组
     //    time 仅被 graphicsLayer / Canvas 的绘制回调读取（draw 阶段），消费量不会重组本函数。
-    val transition = rememberInfiniteTransition(label = "xiahong-time")
+    val transition = rememberInfiniteTransition(label = "neon-time")
     val time by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1_000_000f, // 足够大，等效持续递增（约 1 单位/秒，避免重启跳变）
@@ -60,7 +60,7 @@ fun XiaHongFlow(
             animation = tween(durationMillis = 1_000_000_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "xiahong-time"
+        label = "neon-time"
     )
     // 新阶段特效的相位（独立周期，均由同一 InfiniteTransition 驱动，零重组）
     val sweepPhase by transition.animateFloat(
@@ -70,7 +70,7 @@ fun XiaHongFlow(
             animation = tween(durationMillis = 3200, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "xiahong-sweep"
+        label = "neon-sweep"
     )
     val bokehPhase by transition.animateFloat(
         initialValue = 0f,
@@ -79,7 +79,7 @@ fun XiaHongFlow(
             animation = tween(durationMillis = 9000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "xiahong-bokeh"
+        label = "neon-bokeh"
     )
     val borderPulse by transition.animateFloat(
         initialValue = 0f,
@@ -88,7 +88,7 @@ fun XiaHongFlow(
             animation = tween(durationMillis = 2400, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "xiahong-border"
+        label = "neon-border"
     )
 
     // 3. AGSL Shader 处理（API 33+ 可用，否则为 null 自动降级）

@@ -1,7 +1,7 @@
-# 霞红·流光 (XiaHong Flow) UI 库
+# 霓虹·流光 (Neon Flow) UI 库
 
 基于 Jetpack Compose + AGSL 的纯 Android UI 库（非 App）。对外仅暴露一个 Composable
-`XiaHongFlow`，为包裹的内容叠加六层特效：**液态扭曲基底 → 景深光斑 → 霞红发光粒子奔流 → 动态电流/电弧 → 流光扫光 → 霓虹边框+暗角**。
+`NeonFlow`，为包裹的内容叠加六层特效：**液态扭曲基底 → 景深光斑 → 霓虹发光粒子奔流 → 动态电流/电弧 → 流光扫光 → 霓虹边框+暗角**。
 
 > 进度：第 1–6 轮已全部落地（工程骨架 + 内联 AGSL 液态层 + 粒子/电弧引擎 + 发光打磨 + 发布配置）；
 > 后续新增景深光斑 / 流光扫光 / 霓虹边框三层 Canvas 特效。
@@ -14,15 +14,15 @@ streamer/
 ├── build.gradle.kts                 # 统一 AGP 8.2.2 / Kotlin 1.9.24 插件版本
 ├── gradle.properties
 ├── app/                             # 本地验证用演示模块（com.android.application，不发布）
-│   └── src/main/.../MainActivity.kt # 调用 XiaHongFlow 的演示界面（含精致进度条）
+│   └── src/main/.../MainActivity.kt # 调用 NeonFlow 的演示界面（含精致进度条）
 └── core/ui-xiahong/                 # 库模块 (com.android.library) —— 对外发布单元
     ├── build.gradle.kts             # 含 consumerProguardFiles("consumer-rules.pro")
     ├── consumer-rules.pro           # 保护对外 API 不被混淆
     └── src/main/
         ├── AndroidManifest.xml      # 无启动入口
         └── kotlin/com/example/ui_xiahong/
-            ├── XiaHongFlow.kt        # 对外唯一入口 + 内联 SHADER_SRC + 分层渲染 + 降级
-            ├── XiaHongConfig.kt      # 配置类 + XiaHongIntensity 枚举（含各特效开关）
+            ├── NeonFlow.kt        # 对外唯一入口 + 内联 SHADER_SRC + 分层渲染 + 降级
+            ├── NeonConfig.kt      # 配置类 + NeonIntensity 枚举（含各特效开关）
             └── internal/
                 ├── Renderers.kt      # ParticleEngine + ArcRenderer（internal）
                 └── Effects.kt        # 光斑/扫光/边框（internal，纯 Canvas）
@@ -109,11 +109,11 @@ git push origin v1.3
 // App 界面的某个 Screen
 @Composable
 fun PremiumDashboard() {
-    // 霞红流光库作为最底层容器，包裹任意正常 UI
-    XiaHongFlow(
+    // 霓虹流光库作为最底层容器，包裹任意正常 UI
+    NeonFlow(
         modifier = Modifier.fillMaxSize(),
-        intensity = XiaHongIntensity.MEDIUM,
-        config = XiaHongConfig(
+        intensity = NeonIntensity.MEDIUM,
+        config = NeonConfig(
             primaryColor = Color(0xFFE91E63), // 更鲜艳的粉红
             particleCount = 500,
             enableLiquid = true
@@ -140,7 +140,7 @@ fun PremiumDashboard() {
 ## 发布前 Checklist
 
 - [x] **混淆**：`consumer-rules.pro` 已通过 `consumerProguardFiles` 接入，保护对外 API。
-- [x] **API 兼容**：`XiaHongFlow` 内部用 `if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)` 判断，
+- [x] **API 兼容**：`NeonFlow` 内部用 `if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)` 判断，
       未加 `@RequiresApi`，<33 自动跳过 AGSL 扭曲并保留粒子/电弧，不会崩溃。
 - [x] **内存**：`ParticleEngine` / `ArcRenderer` 均在 `remember` 中创建；`LaunchedEffect` 的
       `while (isActive)` 无限循环在协程作用域取消时自动停止，无泄漏。
@@ -148,7 +148,7 @@ fun PremiumDashboard() {
 ## 已知可调点（后续打磨）
 
 - [x] **液态层零重组**：`time` 改由 `rememberInfiniteTransition` 驱动，仅在 `graphicsLayer` / `Canvas` 的
-      绘制回调中读取，不再触发 `XiaHongFlow` 重组（已落地）。
+      绘制回调中读取，不再触发 `NeonFlow` 重组（已落地）。
 - [x] **电弧升级**：`ArcRenderer` 现用 `PathMeasure` 截取沿路径移动的高亮电光段（流动感）、随机 `alpha`
       闪烁、随机分叉，三层叠加（已落地）。
 - [ ] **粒子辉光方案**：当前用 `BlurMaskFilter`（GPU 单 draw，minSdk 33 已满足硬件加速）。若改为每粒子

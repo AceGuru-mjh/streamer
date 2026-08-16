@@ -3,9 +3,9 @@
 
     <application
         android:allowBackup="true"
-        android:label="XiaHong Flow Demo"
+        android:label="Neon Flow Demo"
         android:supportsRtl="true"
-        android:theme="@style/Theme.XiaHongDemo">
+        android:theme="@style/Theme.NeonDemo">
         <activity
             android:name=".MainActivity"
             android:exported="true"
