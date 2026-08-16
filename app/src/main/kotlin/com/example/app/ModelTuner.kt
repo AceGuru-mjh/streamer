@@ -1,7 +1,6 @@
 package com.example.app
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -151,11 +149,10 @@ fun ModelIntelligenceEffortTuner() {
         }
 
         // 前景层（不参与液态扭曲）
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 28.dp, vertical = 44.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 28.dp, vertical = 44.dp)
         ) {
             Text(
                 text = "Model Intelligence Effort Tuner",
@@ -163,37 +160,42 @@ fun ModelIntelligenceEffortTuner() {
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            // 中间区域：滑块 + 实时档位名（垂直居中）
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                NeonElectricDiscreteSlider(
+                    value = step,
+                    onValueChange = { ns ->
+                        step = ns
+                        config = stepToConfig(ns) // 实时更新全局特效配置
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            NeonElectricDiscreteSlider(
-                value = step,
-                onValueChange = { ns ->
-                    step = ns
-                    config = stepToConfig(ns) // 实时更新全局特效配置
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+                Spacer(modifier = Modifier.height(22.dp))
 
-            Spacer(modifier = Modifier.height(22.dp))
-
-            Text(
-                text = "CURRENT MODE",
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 11.sp,
-                letterSpacing = 3.sp
-            )
-            Text(
-                text = step.label,
-                color = accent,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 2.sp
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "CURRENT MODE",
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontSize = 11.sp,
+                    letterSpacing = 3.sp
+                )
+                Text(
+                    text = step.label,
+                    color = accent,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.sp
+                )
+            }
         }
     }
 }
