@@ -70,8 +70,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                // 半透明底 + 流光特效，便于观察叠加在内容上的流动/发光/电弧效果
-                XiaHongDemoScreen()
+                // 演示：档位调谐器 + 流光特效（库组件驱动）
+                ModelIntelligenceEffortTuner()
             }
         }
     }

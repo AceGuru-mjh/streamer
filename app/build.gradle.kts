@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.app"
         minSdk = 33 // 必须与库的 minSdk 对齐（AGSL 要求）
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.6"
+        versionCode = 8
+        versionName = "1.7"
     }
 
     buildFeatures {
