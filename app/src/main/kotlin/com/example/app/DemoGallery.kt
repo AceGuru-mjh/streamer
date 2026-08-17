@@ -1,6 +1,11 @@
 package com.example.app
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,13 +25,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +44,7 @@ import com.example.ui_xiahong.NeonElectricDiscreteSlider
 import com.example.ui_xiahong.NeonFlow
 import com.example.ui_xiahong.NeonIntensity
 import com.example.ui_xiahong.NeonRhythmGrid
+import kotlinx.coroutines.delay
 
 /** 深空赛博背景色。 */
 private val CyberBg = Color(0xFF05060A)
@@ -45,6 +54,14 @@ private val NeonMagenta = Color(0xFFFF2D9B)
 private val NeonViolet = Color(0xFF9B6BFF)
 private val NeonMint = Color(0xFF36F1A6)
 
+/** 各演示的底部署名。 */
+private val DemoCaptions = mapOf(
+    1 to "律动方阵 · Cyan", 2 to "律动方阵 · Violet", 3 to "律动方阵 · Mint",
+    4 to "方阵 + 滑块", 5 to "滑块 · 默认", 6 to "滑块 · 电流",
+    7 to "滑块 · 放电", 8 to "流光 · 锐利粒子", 9 to "流光 · 边框",
+    10 to "流光 · 全开"
+)
+
 private data class DemoEntry(
     val id: Int,
     val title: String,
@@ -53,16 +70,14 @@ private data class DemoEntry(
 )
 
 /**
- * 演示画廊入口：首页列出 10 个「利用 ui-xiahong 库模块」的演示，
- * 点击进入对应演示。所有演示均**不使用糊的全屏液态背景**，以清晰的律动方块 /
- * 锐利特效 / 滑块为主。
+ * 演示画廊入口：首页列出 10 个「利用 ui-xiahong 库模块」的演示，点击进入对应演示。
+ * 所有演示均**不使用糊的全屏液态背景**，以清晰的律动方块 / 锐利特效 / 滑块为主。
  */
 @Composable
 fun DemoGallery() {
     var selectedId by remember { mutableStateOf<Int?>(null) }
 
     Box(Modifier.fillMaxSize().background(CyberBg)) {
-        // 演示内容区（始终铺满，返回栏以叠加方式置于顶部）
         Box(Modifier.fillMaxSize()) {
             when (selectedId) {
                 null -> DemoHome(onSelect = { selectedId = it })
@@ -82,25 +97,56 @@ fun DemoGallery() {
         if (selectedId != null) {
             DemoTopBar(
                 onBack = { selectedId = null },
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier.align(Alignment.TopStart)
             )
+            DemoCaptions[selectedId]?.let { caption ->
+                Text(
+                    text = caption,
+                    color = Color.White.copy(alpha = 0.42f),
+                    fontSize = 12.sp,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 22.dp)
+                )
+            }
         }
     }
+}
+
+/** 错落入场：淡入 + 轻微上移，按 index 递增延迟。 */
+@Composable
+private fun StaggerItem(index: Int, content: @Composable () -> Unit) {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { delay(45L * index); shown = true }
+    val alpha by animateFloatAsState(if (shown) 1f else 0f, tween(440, easing = LinearEasing))
+    val ty by animateFloatAsState(if (shown) 0f else 16f, tween(440, easing = LinearEasing))
+    Column(Modifier.graphicsLayer { this.alpha = alpha; translationY = ty }) { content() }
 }
 
 @Composable
 private fun DemoTopBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(14.dp),
+        modifier = modifier
+            .padding(14.dp)
+            .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+            .clickable(onClick = onBack)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "‹ 返回",
-            color = NeonCyan,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.clickable(onClick = onBack)
-        )
+        Text("‹ 返回", color = NeonCyan, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun TitlePill(text: String, accent: Color) {
+    Box(
+        modifier = Modifier
+            .background(accent.copy(alpha = 0.10f), RoundedCornerShape(12.dp))
+            .border(1.dp, accent.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        Text(text, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
     }
 }
 
@@ -123,48 +169,61 @@ private fun DemoHome(onSelect: (Int) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "霓虹库 · 演示画廊",
-            color = Color.White,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp
-        )
-        Text(
-            text = "10 个利用 ui-xiahong 库模块的演示",
-            color = Color.White.copy(alpha = 0.5f),
-            fontSize = 12.sp,
-            letterSpacing = 1.sp
-        )
-        Spacer(Modifier.height(8.dp))
-        items.forEach { item ->
-            DemoCard(item = item, onClick = { onSelect(item.id) })
+        StaggerItem(0) {
+            Column {
+                Text("UI PREVIEW", color = NeonCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
+                Spacer(Modifier.height(6.dp))
+                Text("霓虹组件演示画廊", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+                Spacer(Modifier.height(6.dp))
+                Text("10 个利用 ui-xiahong 库模块的清晰特效演示", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
+                Spacer(Modifier.height(12.dp))
+                Box(
+                    Modifier.fillMaxWidth().height(1.dp).background(
+                        Brush.horizontalGradient(
+                            listOf(NeonCyan, NeonCyan.copy(alpha = 0.25f), Color.Transparent)
+                        )
+                    )
+                )
+            }
+        }
+        items.forEachIndexed { i, item ->
+            StaggerItem(i + 1) {
+                DemoCard(index = i + 1, item = item, onClick = { onSelect(item.id) })
+            }
         }
     }
 }
 
 @Composable
-private fun DemoCard(item: DemoEntry, onClick: () -> Unit) {
+private fun DemoCard(index: Int, item: DemoEntry, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
-        shape = RoundedCornerShape(14.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.size(12.dp).background(item.accent, RoundedCornerShape(6.dp))
-            )
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(item.title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text(item.subtitle, color = Color.White.copy(alpha = 0.55f), fontSize = 12.sp)
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(item.accent.copy(alpha = 0.12f), RoundedCornerShape(11.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("%02d".format(index), color = item.accent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(item.title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Spacer(Modifier.height(3.dp))
+                Text(item.subtitle, color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+            }
+            Text("›", color = Color.White.copy(alpha = 0.35f), fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -175,16 +234,7 @@ private fun DemoCard(item: DemoEntry, onClick: () -> Unit) {
 private fun DemoRhythm(color: Color, title: String) {
     NeonRhythmGrid(modifier = Modifier.fillMaxSize(), color = color) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 3.sp,
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
-                    .padding(14.dp)
-            )
+            TitlePill(title, color)
         }
     }
 }
@@ -207,7 +257,7 @@ private fun DemoGridPlusSlider(color: Color) {
 private fun DemoSliderOnly(accent: Color) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("NeonElectricDiscreteSlider", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            TitlePill("NeonElectricDiscreteSlider", accent)
             Spacer(Modifier.height(24.dp))
             var step by remember { mutableStateOf(ElectricSliderStep.Medium) }
             NeonElectricDiscreteSlider(
@@ -223,7 +273,7 @@ private fun DemoSliderOnly(accent: Color) {
 private fun DemoSliderStep(step: ElectricSliderStep, accent: Color) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(step.label, color = accent, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp)
+            TitlePill(step.label, accent)
             Spacer(Modifier.height(20.dp))
             var s by remember { mutableStateOf(step) }
             NeonElectricDiscreteSlider(
@@ -255,12 +305,16 @@ private fun DemoFlowSharp(accent: Color) {
         )
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            var step by remember { mutableStateOf(ElectricSliderStep.XHigh) }
-            NeonElectricDiscreteSlider(
-                value = step,
-                onValueChange = { step = it },
-                modifier = Modifier.fillMaxWidth(0.85f)
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                TitlePill("流光 · 锐利粒子", accent)
+                Spacer(Modifier.height(22.dp))
+                var step by remember { mutableStateOf(ElectricSliderStep.XHigh) }
+                NeonElectricDiscreteSlider(
+                    value = step,
+                    onValueChange = { step = it },
+                    modifier = Modifier.fillMaxWidth(0.85f)
+                )
+            }
         }
     }
 }
@@ -284,7 +338,7 @@ private fun DemoFlowFrame(accent: Color) {
         )
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("NeonFlow · 仅边框 + 扫光", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            TitlePill("流光 · 仅边框 + 扫光", accent)
         }
     }
 }
@@ -312,12 +366,16 @@ private fun DemoFlowFull(accent: Color) {
         )
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            var step by remember { mutableStateOf(ElectricSliderStep.Max) }
-            NeonElectricDiscreteSlider(
-                value = step,
-                onValueChange = { step = it },
-                modifier = Modifier.fillMaxWidth(0.85f)
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                TitlePill("流光 · 全开", accent)
+                Spacer(Modifier.height(22.dp))
+                var step by remember { mutableStateOf(ElectricSliderStep.Max) }
+                NeonElectricDiscreteSlider(
+                    value = step,
+                    onValueChange = { step = it },
+                    modifier = Modifier.fillMaxWidth(0.85f)
+                )
+            }
         }
     }
 }
