@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +20,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,11 +61,9 @@ private data class DemoEntry(
 fun DemoGallery() {
     var selectedId by remember { mutableStateOf<Int?>(null) }
 
-    Column(Modifier.fillMaxSize().background(CyberBg)) {
-        if (selectedId != null) {
-            DemoTopBar(onBack = { selectedId = null })
-        }
-        Box(Modifier.fillMaxWidth().weight(1f)) {
+    Box(Modifier.fillMaxSize().background(CyberBg)) {
+        // 演示内容区（始终铺满，返回栏以叠加方式置于顶部）
+        Box(Modifier.fillMaxSize()) {
             when (selectedId) {
                 null -> DemoHome(onSelect = { selectedId = it })
                 1 -> DemoRhythm(NeonCyan, "律动方阵 · Cyan")
@@ -80,13 +79,19 @@ fun DemoGallery() {
                 else -> DemoHome(onSelect = { selectedId = it })
             }
         }
+        if (selectedId != null) {
+            DemoTopBar(
+                onBack = { selectedId = null },
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     }
 }
 
 @Composable
-private fun DemoTopBar(onBack: () -> Unit) {
+private fun DemoTopBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(14.dp),
+        modifier = modifier.fillMaxWidth().padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -155,7 +160,7 @@ private fun DemoCard(item: DemoEntry, onClick: () -> Unit) {
             Box(
                 modifier = Modifier.size(12.dp).background(item.accent, RoundedCornerShape(6.dp))
             )
-            width(12.dp)
+            Spacer(Modifier.width(12.dp))
             Column {
                 Text(item.title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 Text(item.subtitle, color = Color.White.copy(alpha = 0.55f), fontSize = 12.sp)
