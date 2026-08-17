@@ -2,12 +2,25 @@ package com.example.ui_xiahong
 
 import androidx.compose.ui.graphics.Color
 
+/**
+ * 流光强度档位：作为速度/密度/液态位移的统一倍率。
+ * - [CALM]：0.5×，最克制；
+ * - [MEDIUM]：1.0×，默认；
+ * - [ULTRA]：2.0×，最强烈。
+ */
 enum class NeonIntensity(val multiplier: Float) {
     CALM(0.5f),
     MEDIUM(1.0f),
     ULTRA(2.0f)
 }
 
+/**
+ * 霓虹流光库的总配置。所有颜色、密度、速度、开关均由此类参数化控制。
+ *
+ * 提示：默认开启 [enableLiquid]（AGSL 液态扭曲）会带来轻微流动质感，但也可能显得「糊」。
+ * 若需要**清晰、锐利**的观感（如演示/控件叠加），建议显式传
+ * `NeonConfig(enableLiquid = false)`，或直接使用更克制的 [NeonRhythmGrid] 律动方块层。
+ */
 data class NeonConfig(
     val primaryColor: Color = Color(0xFF00E5FF),   // 霓虹主色（冷霓虹青蓝，未来感）
     val arcColor: Color = Color(0xFFFFFFFF),       // 电流/电花颜色（霓虹白荧光）

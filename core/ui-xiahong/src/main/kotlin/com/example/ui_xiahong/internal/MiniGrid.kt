@@ -1,5 +1,6 @@
 package com.example.ui_xiahong.internal
 
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -9,13 +10,31 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * 背景「网格呼吸方阵」——满屏律动迷你小方块。
+ * 律动小方块引擎：满屏按网格排布的小方块，亮度/大小随 `sin(time * pulseFreq + seed)` 呼吸。
+ * 纯 Canvas 绘制，不触发 Compose 重组；方块始终**锐利无模糊**。
  *
- * 按网格排布的小方块，亮度/大小随 `sin(time * pulseFreq + seed)` 呼吸起伏，
- * 形成类似数据矩阵的赛博感。纯 Canvas 绘制，不触发 Composable 重组。
- * 整体 alpha 偏低，作为背景氛围层，不抢前景内容。
+ * 视觉参数集中在构造期，便于 NeonFlow（背景氛围）与 NeonRhythmGrid（清晰装饰）复用同一引擎、
+ * 却呈现不同气质。默认值偏向「低调背景氛围」，NeonRhythmGrid 会传入更鲜明的参数。
+ *
+ * @param cols 列数
+ * @param rows 行数
+ * @param gapFraction 单元格内留白比例 [0,1)：方块边长 = 单元格短边 * (1 - gapFraction)，越大越疏朗
+ * @param cornerRadiusFraction 圆角占方块边长的比例 [0,1]，0=纯方块、1=圆形
+ * @param minAlpha 呼吸最低透明度
+ * @param maxAlpha 呼吸最高透明度
+ * @param minScale 呼吸最小缩放（0=完全消失，制造闪烁感）
+ * @param maxScale 呼吸最大缩放
  */
-internal class MiniBlockEngine(private val cols: Int = 18, private val rows: Int = 30) {
+internal class MiniBlockEngine(
+    private val cols: Int = 18,
+    private val rows: Int = 30,
+    private val gapFraction: Float = 0.35f,
+    private val cornerRadiusFraction: Float = 0.25f,
+    private val minAlpha: Float = 0.05f,
+    private val maxAlpha: Float = 0.30f,
+    private val minScale: Float = 0.35f,
+    private val maxScale: Float = 1.0f
+) {
     // 每个方块带独立相位与频率，避免整齐划一的呆板感
     private val blocks = List(cols * rows) { idx ->
         Block(
@@ -33,7 +52,7 @@ internal class MiniBlockEngine(private val cols: Int = 18, private val rows: Int
 
         val cellW = w / cols
         val cellH = h / rows
-        val baseSize = min(cellW, cellH) * 0.42f
+        val baseSize = min(cellW, cellH) * (1f - gapFraction)
 
         blocks.forEach { b ->
             val cx = (b.col + 0.5f) * cellW
@@ -41,16 +60,16 @@ internal class MiniBlockEngine(private val cols: Int = 18, private val rows: Int
 
             // 归一化呼吸量 [0,1]
             val pulse = (sin(time * b.pulseFreq + b.seed) + 1f) * 0.5f
-            val scale = 0.35f + 0.65f * pulse
-            val alpha = (0.05f + 0.20f * pulse).coerceIn(0f, 0.32f)
+            val scale = minScale + (maxScale - minScale) * pulse
+            val alpha = (minAlpha + (maxAlpha - minAlpha) * pulse).coerceIn(0f, 1f)
             val size = baseSize * scale
-            if (size <= 0f) return@forEach
+            if (size <= 0.5f) return@forEach
 
             drawScope.drawRoundRect(
                 color = color.copy(alpha = alpha),
                 topLeft = Offset(cx - size / 2f, cy - size / 2f),
                 size = Size(size, size),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(size * 0.25f, size * 0.25f)
+                cornerRadius = CornerRadius(size * cornerRadiusFraction, size * cornerRadiusFraction)
             )
         }
     }

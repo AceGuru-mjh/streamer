@@ -1,7 +1,8 @@
 # 霓虹·流光 (Neon Flow) UI 库
 
-基于 Jetpack Compose + AGSL 的纯 Android UI 库（非 App）。对外仅暴露一个 Composable
-`NeonFlow`，为包裹的内容叠加六层特效：**液态扭曲基底 → 景深光斑 → 霓虹发光粒子奔流 → 动态电流/电弧 → 流光扫光 → 霓虹边框+暗角**。
+基于 Jetpack Compose + AGSL 的纯 Android UI 库（非 App）。对外暴露两个核心 Composable：
+- `NeonFlow`：为包裹内容叠加多层流光特效（**景深光斑 → 律动方块 → 霓虹发光粒子奔流 → 白荧光电花/电流 → 流光扫光 → 霓虹边框+暗角**；液态扭曲为可选层，关闭即为锐利清晰观感）。
+- `NeonRhythmGrid`：更克制、更清晰的**律动方块装饰层**（满屏锐利呼吸小方块，无模糊），适合作为不抢内容的底层纹理或控件背景。
 
 > 进度：第 1–6 轮已全部落地（工程骨架 + 内联 AGSL 液态层 + 粒子/电弧引擎 + 发光打磨 + 发布配置）；
 > 后续新增景深光斑 / 流光扫光 / 霓虹边框三层 Canvas 特效。
@@ -21,11 +22,14 @@ streamer/
     └── src/main/
         ├── AndroidManifest.xml      # 无启动入口
         └── kotlin/com/example/ui_xiahong/
-            ├── NeonFlow.kt        # 对外唯一入口 + 内联 SHADER_SRC + 分层渲染 + 降级
+            ├── NeonFlow.kt        # 对外入口 + 内联 SHADER_SRC + 分层渲染 + 降级
+            ├── NeonRhythmGrid.kt  # 对外：清晰律动方块装饰层（无模糊）
             ├── NeonConfig.kt      # 配置类 + NeonIntensity 枚举（含各特效开关）
+            ├── NeonElectricSlider.kt # 对外：霓虹离散磁吸滑块
             └── internal/
-                ├── Renderers.kt      # ParticleEngine + ArcRenderer（internal）
-                └── Effects.kt        # 光斑/扫光/边框（internal，纯 Canvas）
+                ├── Renderers.kt      # ParticleEngine + ArcRenderer（白荧光电花）
+                ├── MiniGrid.kt       # MiniBlockEngine 律动方块引擎
+                └── Effects.kt        # 光斑/扫光/边框（纯 Canvas）
 ```
 
 > 注意：`:app` 仅用于本地跑效果/截图验证，**它是 application 不会被 maven 发布**；对外发布的只有 `:core:ui-xiahong`。
@@ -106,33 +110,30 @@ git push origin v1.3
 ## 使用示例
 
 ```kotlin
-// App 界面的某个 Screen
-@Composable
-fun PremiumDashboard() {
-    // 霓虹流光库作为最底层容器，包裹任意正常 UI
-    NeonFlow(
-        modifier = Modifier.fillMaxSize(),
-        intensity = NeonIntensity.MEDIUM,
-        config = NeonConfig(
-            primaryColor = Color(0xFFE91E63), // 更鲜艳的粉红
-            particleCount = 500,
-            enableLiquid = true
-        )
-    ) {
-        LazyColumn(modifier = Modifier.padding(16.dp)) {
-            item {
-                Text("尊享会员界面", color = Color.White,
-                     style = MaterialTheme.typography.displayMedium)
-            }
-            items(10) { index ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.1f))
-                ) {
-                    Text("数据卡片 $index", modifier = Modifier.padding(16.dp), color = Color.White)
-                }
-            }
-        }
+// 1) 清晰律动方块背景（无模糊、克制）——推荐作为控件/内容的底层纹理
+NeonRhythmGrid(
+    modifier = Modifier.fillMaxSize(),
+    color = Color(0xFF00E5FF),
+    columns = 18,
+    rows = 30
+) {
+    // 在方块之上叠加任意内容（滑块、文字、控件）
+    NeonElectricDiscreteSlider(value = step, onValueChange = { step = it })
+}
+
+// 2) 完整流光特效包裹内容（液态扭曲为可选层，关闭即锐利）
+NeonFlow(
+    modifier = Modifier.fillMaxSize(),
+    intensity = NeonIntensity.MEDIUM,
+    config = NeonConfig(
+        enableLiquid = false,            // 关闭液态扭曲 → 清晰不糊
+        primaryColor = Color(0xFF00E5FF),
+        particleCount = 500
+    )
+) {
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
+        item { Text("尊享会员界面", color = Color.White) }
+        // ...
     }
 }
 ```

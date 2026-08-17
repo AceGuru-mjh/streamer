@@ -38,6 +38,22 @@ private const val SHADER_SRC = """
     }
 """
 
+/**
+ * 霓虹流光对外唯一入口：用特效层包裹任意子内容。
+ *
+ * 视觉由多层特效协同构成：背景光斑 → 律动方块([NeonConfig.enableMiniBlocks]) →
+ * 发光粒子奔流 → 霓虹白荧光电花/电流([NeonConfig.enableArc] + [NeonConfig.enableSparks]) →
+ * 流光扫光 → 霓虹边框+暗角，最上层叠加 [content]。
+ * 液态扭曲([NeonConfig.enableLiquid])为可选层，关闭即为锐利清晰观感。
+ *
+ * 所有层均受 [NeonConfig] 开关控制，可自由组合。若只需要克制、清晰的律动纹理，
+ * 可直接用更轻量的 [NeonRhythmGrid]，不必引入整层流光。
+ *
+ * @param modifier 外层 Box 修饰符
+ * @param config 特效配置（颜色/开关/强度）
+ * @param intensity 流光强度档位（速度/密度/位移倍率）
+ * @param content 被特效包裹的子内容（不参与液态扭曲，保持清晰）
+ */
 @Composable
 fun NeonFlow(
     modifier: Modifier = Modifier,
