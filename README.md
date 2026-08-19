@@ -14,8 +14,9 @@ streamer/
 ├── settings.gradle.kts              # 根工程，引入 :core:ui-xiahong 与 :app（demo）
 ├── build.gradle.kts                 # 统一 AGP 8.2.2 / Kotlin 1.9.24 插件版本
 ├── gradle.properties
-├── app/                             # 本地验证用演示模块（com.android.application，不发布）
-│   └── src/main/.../MainActivity.kt # 调用 NeonFlow 的演示界面（含精致进度条）
+├── app/                             # 本地验证用演示模块（com.android.application，桌面显示名「ui-preview」，不发布）
+│   └── src/main/.../MainActivity.kt # 入口 Activity（仅 setContent）
+│   └── src/main/.../DemoGallery.kt  # 10 屏演示画廊：首页卡片导航 → 各 demo 利用 ui-xiahong 库模块
 └── core/ui-xiahong/                 # 库模块 (com.android.library) —— 对外发布单元
     ├── build.gradle.kts             # 含 consumerProguardFiles("consumer-rules.pro")
     ├── consumer-rules.pro           # 保护对外 API 不被混淆
